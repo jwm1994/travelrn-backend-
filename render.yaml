@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: travelrn-api
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travelrn-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: travelrn-redis
+          property: connectionString
+    plan: free
+    repo: .
+    branch: main
+    rootDir: backend
+  - type: worker
+    name: travelrn-worker
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: celery -A app.celery_worker worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travelrn-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: travelrn-redis
+          property: connectionString
+    plan: free
+    repo: .
+    branch: main
+    rootDir: backend
+  - type: worker
+    name: travelrn-beat
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: celery -A app.celery_worker beat --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travelrn-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: travelrn-redis
+          property: connectionString
+    plan: free
+    repo: .
+    branch: main
+    rootDir: backend
+
+databases:
+  - name: travelrn-db
+    plan: free
+
+services:
+  - type: redis
+    name: travelrn-redis
+    plan: free
